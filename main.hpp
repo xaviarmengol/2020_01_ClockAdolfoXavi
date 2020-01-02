@@ -22,13 +22,18 @@ using namespace std;
 //                                              //
 //////////////////////////////////////////////////
 
+void rootPage();
+
 void canvisModes();
 void estatModes();
 void actualitzaHora();
 void fixaPeriodeExecucioLoop();
-String conexioAPI(String peticio);
 
-void rootPage();
+String getApiResult(String peticio);
+String apiSants (int dia, int mes);
+// void apiFootball();
+// void apiFootBallData();
+
 
 //////////////////////////////////////////////////
 //                                              //
@@ -73,7 +78,11 @@ string textMode="";
 
 int volta = 0;
 
-String cridaAPI = "https://api.abalin.net/namedays?country=es&month=7&day=23";
+// Gestió APIs
+
+//StaticJsonDocument<300> doc;
+
+DynamicJsonDocument doc(1000);
 
 //////////////////////////////////////////////////
 //                                              //
@@ -111,7 +120,7 @@ static const char* host = HOSTIDENTIFY "-webupdate";
 HTTPUpdateServer httpUpdater;
 AutoConnectAux  update("/update", "Update");
 
-
+String cridaAPI = "https://api.abalin.net/namedays?country=es&month=7&day=23";
 
 
 //////////////////////////////////////////////////

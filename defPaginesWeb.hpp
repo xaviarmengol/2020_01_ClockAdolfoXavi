@@ -10,10 +10,13 @@
 //                                              //
 //////////////////////////////////////////////////
 
+
 String entradaPageConf(AutoConnectAux& aux, PageArgument& args);
 String entradaPageConfW(AutoConnectAux& aux, PageArgument& args);
 String entradaPageAPI(AutoConnectAux& aux, PageArgument& args);
-String entradaPageReset(AutoConnectAux& aux, PageArgument& args);
+String entradaPageAPIW(AutoConnectAux& aux, PageArgument& args);
+String entradaPageApiSants(AutoConnectAux& aux, PageArgument& args);
+String entradaPageReboot(AutoConnectAux& aux, PageArgument& args);
 String entradaPageHora(AutoConnectAux& aux, PageArgument& args);
 String entradaPageHoraW(AutoConnectAux& aux, PageArgument& args);
 
@@ -23,7 +26,7 @@ String entradaPageHoraW(AutoConnectAux& aux, PageArgument& args);
 //                                              //
 //////////////////////////////////////////////////
 
-ACText(header, "<h2>Opcions Rellotge</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
+ACText(header_conf, "<h2>Opcions Rellotge</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
 ACText(caption, "Opcions de configuració del rellotge", "font-family:serif;color:#4682b4;");
 ACInput(modeop, "", "Mode Operació", "^[0-9]$");
 ACSelect(idioma, { String(IDIOMASTRLIST[0].c_str()), String(IDIOMASTRLIST[1].c_str())}, "Seleccioni Idioma", 1);
@@ -38,12 +41,12 @@ ACInput(textStyle_conf, "", "Estil rellotge WEB", "");
 
 ACSubmit(guardar, "Guardar", "/configuracio_w");
 ACSubmit(reset, "Reset", "/reset");
-ACSubmit(home_conf, "Home","/");
+ACSubmit(home, "Home","/");
 ACElement(adjust_width, "<script type=\"text/javascript\">window.onload=function(){var t=document.querySelectorAll(\"input[type='text']\");for(i=0;i<t.length;i++){var e=t[i].getAttribute(\"placeholder\");e&&t[i].setAttribute(\"size\",e.length*.8)}};</script>");
 
 
 AutoConnectAux PageConf ("/configuracio", "Configuració Rellotge", true, {
-    header,
+    header_conf,
     caption,
     modeop,
     idioma,
@@ -59,45 +62,42 @@ AutoConnectAux PageConf ("/configuracio", "Configuració Rellotge", true, {
     newline,
     guardar,
     reset,
-    home_conf,
+    home,
     adjust_width
 });
 
 
 //////////////////////////////////////////////////
 //                                              //
-// Pàgina configuració rellotge  - CONF         //
+// Pàgina configuració rellotge  - WRITE        //
 //                                              //
 //////////////////////////////////////////////////
 
-ACText(header_conf_w, "<h2>Configuració actualitzada</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
 ACText(caption_conf_w, "Configuració actualitzada", "font-family:serif;color:#4682b4;");
 ACSubmit(hora_conf_w, "Tornar Configuració Rellotge", "/configuracio");
-ACSubmit(home_conf_w, "Tornar Home", "/");
 
 AutoConnectAux PageElemW ("/configuracio_w", "Opcions Rellotge", false, {
-    header_conf_w,
+    header_conf,
     caption_conf_w,
     hora_conf_w,
-    home_conf_w
+    home
 });
 
 //////////////////////////////////////////////////
 //                                              //
-// Pàgina Reset ESP Autoconnect                 //
+// Pàgina Reboot ESP Autoconnect                 //
 //                                              //
 //////////////////////////////////////////////////
 
 ACText(header_reset, "<h2>Reset Rellotge</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
 ACText(caption_reset, "Està segur de realitzar un reset al rellotge?", "font-family:serif;color:#4682b4;");
 ACSubmit(conf_reset, "Confirmar reset", "/reset");
-ACSubmit(home_reset, "Tornar Home", "/");
 
-AutoConnectAux PageReset ("/reset", "Reset Rellotge", false, {
+AutoConnectAux PageReboot ("/reset", "Reset Rellotge", true, {
     header_reset,
     caption_reset,
     conf_reset,
-    home_reset
+    home
 });
 
 
@@ -111,17 +111,60 @@ ACText(header_api, "<h2>Test APIs</h2>", "text-align:center;color:#2f4f4f;paddin
 ACText(caption_api, "Test de les APIs del rellotge", "font-family:serif;color:#4682b4;");
 ACInput(textAPI_api, "", "Petició de la API", "");
 ACText(resultat_api, "...", "font-family:serif;color:#4682b4;");
-ACSubmit(conf_api, "Llançar la petició de la API", "/ap");
-ACSubmit(home_api, "Tornar Home", "/");
+ACSubmit(conf_api, "Llançar la petició de la API", "/api");
+ACSubmit(guardar_api, "Guardar nova petició", "/api_w");
 
-AutoConnectAux PageAPI ("/ap", "Access Point", true, {
+AutoConnectAux PageAPI ("/api", "Test APIs", true, {
     header_api,
     caption_api,
     textAPI_api,
+    guardar_api,
     resultat_api,
     conf_api,
-    home_api
+    home
 });
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Pàgina test APIs - WRITE                     //
+//                                              //
+//////////////////////////////////////////////////
+
+ACText(caption_api_w, "Apis modificades", "font-family:serif;color:#4682b4;");
+
+AutoConnectAux PageAPIW ("/api_w", "Test APIs", false, {
+    header_api,
+    caption_api_w,
+    conf_api,
+    home
+});
+
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Pàgina lectura API Sants                     //
+//                                              //
+//////////////////////////////////////////////////
+
+ACText(header_api_sants, "<h2>Test APIs Sants</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
+ACText(caption_api_sants, "Test de la API dels Sants", "font-family:serif;color:#4682b4;");
+ACInput(textAPI_api_dia, "8", "Dia", "");
+ACInput(textAPI_api_mes, "12", "Mes", "");
+ACSubmit(conf_api_sants, "Llançar la petició de la API Sants", "/api_sants");
+
+AutoConnectAux PageApiSants ("/api_sants", "Test APIs Sants", true, {
+    header_api_sants,
+    caption_api_sants,
+    textAPI_api_dia,
+    textAPI_api_mes,
+    resultat_api,
+    conf_api_sants,
+    
+    home
+});
+
 
 
 //////////////////////////////////////////////////
@@ -141,7 +184,7 @@ ACInput(mes_hora, "", "Mes", "");
 ACInput(dia_hora, "", "Dia", "");
 
 ACSubmit(conf_hora, "Confirmar actualització hora", "/hora_w");
-ACSubmit(home_hora, "Tornar Home", "/");
+
 
 AutoConnectAux PageHora ("/hora", "Configuració Hora i Data", true, {
     header_hora,
@@ -156,23 +199,22 @@ AutoConnectAux PageHora ("/hora", "Configuració Hora i Data", true, {
     any_hora,
     newline,    
     conf_hora,
-    home_hora
+    home
 });
 
 
 //////////////////////////////////////////////////
 //                                              //
-// Pàgina Configuració Temps OFFLINE - CONF     //
+// Pàgina Configuració Temps OFFLINE - WRITE    //
 //                                              //
 //////////////////////////////////////////////////
 
-ACText(header_hora_w, "<h2>Hora i data configurada</h2>", "text-align:center;color:#2f4f4f;padding:10px;");
 ACText(caption_hora_w, "Hora i data configurada", "font-family:serif;color:#4682b4;");
 ACSubmit(hora_hora_w, "Tornar Configuració Hora", "/hora");
 ACSubmit(home_hora_w, "Tornar Home", "/");
 
 AutoConnectAux PageHoraW ("/hora_w", "Configuració Hora i Data", false, {
-    header_hora_w,
+    header_hora,
     caption_hora_w,
     hora_hora_w,
     home_hora_w
@@ -180,3 +222,4 @@ AutoConnectAux PageHoraW ("/hora_w", "Configuració Hora i Data", false, {
 
 
 #endif
+
