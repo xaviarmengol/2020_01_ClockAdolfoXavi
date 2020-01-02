@@ -15,6 +15,8 @@ String entradaPageConf(AutoConnectAux& aux, PageArgument& args);
 String entradaPageConfW(AutoConnectAux& aux, PageArgument& args);
 String entradaPageAPI(AutoConnectAux& aux, PageArgument& args);
 String entradaPageAPIW(AutoConnectAux& aux, PageArgument& args);
+String entradaPageAPIfb(AutoConnectAux& aux, PageArgument& args);
+String entradaPageAPIfbW(AutoConnectAux& aux, PageArgument& args);
 String entradaPageApiSants(AutoConnectAux& aux, PageArgument& args);
 String entradaPageReboot(AutoConnectAux& aux, PageArgument& args);
 String entradaPageHora(AutoConnectAux& aux, PageArgument& args);
@@ -162,6 +164,46 @@ AutoConnectAux PageApiSants ("/api_sants", "Test APIs Sants", true, {
     resultat_api,
     conf_api_sants,
     
+    home
+});
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Pàgina test APIs Football                    //
+//                                              //
+//////////////////////////////////////////////////
+
+ACText(header_fb, "<h2>Test APIs Football </h2>", "text-align:center;color:#2f4f4f;padding:10px;");
+ACText(caption_fb, "Test API Football", "font-family:serif;color:#4682b4;");
+ACInput(textAPI_fb, "", "Petició de la API", "");
+ACText(resultat_fb, "...", "font-family:serif;color:#4682b4;");
+ACSubmit(conf_fb, "Llançar la petició de la API", "/api_fb");
+ACSubmit(guardar_fb, "Guardar nova petició", "/api_fb_w");
+
+AutoConnectAux PageAPIfb ("/api_fb", "Test API Football", true, {
+    header_fb,
+    caption_fb,
+    textAPI_fb,
+    guardar_fb,
+    resultat_fb,
+    conf_fb,
+    home
+});
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Pàgina test APIs Football - WRITE            //
+//                                              //
+//////////////////////////////////////////////////
+
+ACText(caption_fb_w, "Petició modificada", "font-family:serif;color:#4682b4;");
+
+AutoConnectAux PageAPIfbW ("/api_fb_w", "Test API Football", false, {
+    header_fb,
+    caption_fb_w,
+    conf_fb,
     home
 });
 

@@ -54,6 +54,7 @@ void setup() {
     param.sonParaula = false;
     param.idioma = 0;
     param.pinOut = 2;
+    param.ajustHora = 0;
     param.textStyleWEB ="height: 300px; width: 300px; background-color: #1111; border-collapse: collapse; border-style: hidden; margin-left: auto; margin-right: auto;";
 
     // Inicialitzem OBJECTES APLICACIÓ
@@ -78,10 +79,13 @@ void setup() {
 
     PageApiSants.on(entradaPageApiSants, AC_EXIT_LATER);
 
+    PageAPIfb.on(entradaPageAPIfb, AC_EXIT_AHEAD);
+    PageAPIfbW.on(entradaPageAPIfbW, AC_EXIT_AHEAD);
+
     PageHora.on(entradaPageHora, AC_EXIT_AHEAD);
     PageHoraW.on(entradaPageHoraW, AC_EXIT_AHEAD);
     
-    Portal.join({update, PageReboot, PageAPI, PageAPIW, PageApiSants, PageConf, PageElemW, PageHora, PageHoraW});    // Registrem les pagines al Autoconnect + OTA (update)
+    Portal.join({update, PageReboot, PageAPI, PageAPIW, PageApiSants, PageAPIfb, PageAPIfbW, PageConf, PageElemW, PageHora, PageHoraW});    // Registrem les pagines al Autoconnect + OTA (update)
     
     Server.on("/", rootPage);
 
@@ -794,6 +798,36 @@ String entradaPageApiSants(AutoConnectAux& aux, PageArgument& args) {
     return String();
 }
 
+
+
+// Funció de transció quan es crida la pàgina
+
+String entradaPageAPIfb(AutoConnectAux& aux, PageArgument& args) {
+    String resultatAPI;
+
+    
+    AutoConnectInput& input = aux.getElement<AutoConnectInput>("textAPI_fb");
+    input.value = cridaAPIfb;
+    resultatAPI = apiFootBallData();
+
+    AutoConnectText& resultat = aux.getElement<AutoConnectText>("resultat_fb");
+    resultat.value = resultatAPI;
+
+    return String();
+}
+
+// Funció de transció quan es crida la pàgina - Escriure
+
+String entradaPageAPIfbW(AutoConnectAux& aux, PageArgument& args) {
+
+    // Guardem la nova petició
+
+    // TODO: No funciona perque la petició es genera dins la funció de la API
+    cridaAPIfb = Server.arg("textAPI_fb");
+
+    return String();
+}
+
 // Funció de transció quan es crida la pàgina
 
 String entradaPageReboot(AutoConnectAux& aux, PageArgument& args) {
@@ -815,7 +849,7 @@ String entradaPageReboot(AutoConnectAux& aux, PageArgument& args) {
 
 // Gestió APIs
 
-String getApiResult(String peticio){
+String getApiResult(String peticio, String XAuth){
 
     // Per saber com deserialitzar!!!
     //https://arduinojson.org/v6/assistant/
@@ -827,6 +861,10 @@ String getApiResult(String peticio){
     Serial.println(peticio);
     
     http.begin(peticio);
+
+    if (XAuth !="res") {
+        http.addHeader("X-Auth-Token", XAuth);
+    }
 
     int httpCode = http.GET();  //Make the request
 
@@ -890,75 +928,59 @@ String apiSants (int dia, int mes) {
 }
 
 
-// NO FUNCIONA!!!!!!!!!!!!!!!!!!!!!!!!!
-
-void apiFootBallData() {
+String apiFootBallData() {
 
     //https://www.football-data.org/documentation/quickstart/
+    //https://www.jokecamp.com/blog/guide-to-football-and-soccer-data-and-apis/
 
     HTTPClient http;
     String payload;
+    String peticio;
+    String clauXToken;
+    String strRetornat;
     
     // incialitzem client APIs
-    http.begin("https://api.football-data.org/v2/teams/86/matches?status=SCHEDULED/limit/3/");
-    http.setAuthorization("xxx");
 
-    int httpCode = http.GET();  //Make the request
+    // TODO: Modificar perque agafi el dia d'avui!!!
+    //peticio = "https://api.football-data.org/v2/teams/81/matches?dateFrom=2019-12-21&dateTo=2020-01-02&limit=1";
+    
+    //cridaAPI = peticio;
+    clauXToken = "xxx";
 
-    if (httpCode > 0) { //Check for the returning code
-        //payload = http.getString();/////////////////////////////////////////////////////////////////
-        // TODO: Modificar a ---> http.getStream
-        
-        Serial.println(httpCode);
-        Serial.println(payload);
+    String jsonStr;
+    jsonStr = getApiResult(cridaAPIfb, clauXToken);
+    jsonStr.replace('\\', '_'); // TODO: S'ha de completar amb caractes Unicode
+
+    DeserializationError error = deserializeJson(doc, jsonStr);
+
+    Serial.println("Deserialitzat");
+
+    // Lectura d'un sol partit 
+
+    if (error) {
+        Serial.println("ERROR: Lectura Json : ");
+        Serial.println(jsonStr);
+        strRetornat = jsonStr;
     } else {
-        Serial.print("Error on HTTP request : ");
-        Serial.println(httpCode);
+
+        if (doc.containsKey("matches")) {
+            int golsCasa = doc["matches"][0]["score"]["fullTime"]["homeTeam"];
+            int golsFora = doc["matches"][0]["score"]["fullTime"]["awayTeam"];
+            const char* equipCasa = doc["matches"][0]["homeTeam"]["name"];
+            const char* equipFora = doc["matches"][0]["awayTeam"]["name"];
+
+            strRetornat = String(equipCasa) + " " + String(golsCasa) + " - " + String(equipFora) + " " + String(golsFora);
+        } else{
+            strRetornat = String("La API respon amb un error : " + String(jsonStr));
+        }
+
     }
-
-    http.end(); // Alliberem la conexió
-
+    //Serial.print("Resultat->");
+    Serial.println(strRetornat);
+    return(strRetornat);
 
 }
 
-
-
-// NO FUNCIONA!!!!!!!!!!!!!!!!!!!!!!!!!
-
-void apiFootball() {
-    //https://www.football-data.org/documentation/samples
-
-    HTTPClient http;
-    WiFiClient payload;
-    
-    String peticio = "https://www.sport.es/es/directos/";
-
-    // incialitzem client APIs
-    http.begin(peticio);
-
-
-    int httpCode = http.GET();  //Make the request
-
-    Serial.println("Peticio Feta");
-
-    if (httpCode > 0) { //Check for the returning code
-        payload = http.getStream();
-        // TODO: Modificar a ---> http.getStream
-        Serial.println(httpCode);
-    } else {
-        Serial.print("Error on HTTP request : ");
-        Serial.println(httpCode);
-    }
-
-    http.end(); // Alliberem la conexió 
-
-
-    Serial.println(payload.find("<div class=\"match\">"));
-
-    //payload.indexOf("<div class=\"match\">", 0);
-    //Serial.println(payload.substring(10));
-
-}
 
 
     

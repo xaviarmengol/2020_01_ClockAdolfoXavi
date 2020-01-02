@@ -29,10 +29,9 @@ void estatModes();
 void actualitzaHora();
 void fixaPeriodeExecucioLoop();
 
-String getApiResult(String peticio);
+String getApiResult(String peticio, String XAuth="res");
 String apiSants (int dia, int mes);
-// void apiFootball();
-// void apiFootBallData();
+String apiFootBallData();
 
 
 //////////////////////////////////////////////////
@@ -82,7 +81,7 @@ int volta = 0;
 
 //StaticJsonDocument<300> doc;
 
-DynamicJsonDocument doc(1000);
+DynamicJsonDocument doc(2000);
 
 //////////////////////////////////////////////////
 //                                              //
@@ -121,6 +120,7 @@ HTTPUpdateServer httpUpdater;
 AutoConnectAux  update("/update", "Update");
 
 String cridaAPI = "https://api.abalin.net/namedays?country=es&month=7&day=23";
+String cridaAPIfb = "https://api.football-data.org/v2/teams/81/matches?dateFrom=2019-12-21&dateTo=2020-01-02&limit=1";
 
 
 //////////////////////////////////////////////////
