@@ -1,17 +1,19 @@
+// Llibreries de Hardware
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
+// Llibreries de WEB
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
-
 #include <WebServer.h>
+#include <HTTPClient.h> // conectar a APIs
 
 // Llibreria d'autoconnexió WiFi (client + servidor)
 #include <AutoConnect.h>
 
-// Conexió a APIs
-#include <HTTPClient.h>
+// JSON
+#include <ArduinoJson.h>
 
 // Llibreria temps offline (https://github.com/hickey/arduino/tree/master/Libraries/DateTime/DateTime)
 #include <Datetime.h>
@@ -69,13 +71,17 @@ void setup() {
     PageConf.on(entradaPageConf, AC_EXIT_AHEAD);
     PageElemW.on(entradaPageConfW, AC_EXIT_AHEAD);
     
-    PageReset.on(entradaPageReset, AC_EXIT_BOTH);
-    PageAPI.on(entradaPageAPI, AC_EXIT_BOTH);
+    PageReboot.on(entradaPageReboot, AC_EXIT_LATER);
+
+    PageAPI.on(entradaPageAPI, AC_EXIT_AHEAD);
+    PageAPIW.on(entradaPageAPIW, AC_EXIT_AHEAD);
+
+    PageApiSants.on(entradaPageApiSants, AC_EXIT_LATER);
 
     PageHora.on(entradaPageHora, AC_EXIT_AHEAD);
     PageHoraW.on(entradaPageHoraW, AC_EXIT_AHEAD);
     
-    Portal.join({update, PageReset, PageAPI, PageConf, PageElemW, PageHora, PageHoraW});    // Registrem les pagines al Autoconnect + OTA (update)
+    Portal.join({update, PageReboot, PageAPI, PageAPIW, PageApiSants, PageConf, PageElemW, PageHora, PageHoraW});    // Registrem les pagines al Autoconnect + OTA (update)
     
     Server.on("/", rootPage);
 
@@ -755,7 +761,32 @@ String entradaPageAPI(AutoConnectAux& aux, PageArgument& args) {
 
     AutoConnectInput& input = aux.getElement<AutoConnectInput>("textAPI_api");
     input.value = cridaAPI;
-    resultatAPI = conexioAPI(cridaAPI);
+    resultatAPI = getApiResult(cridaAPI);
+    //resultatAPI = apiSants(cridaAPI);
+
+    AutoConnectText& resultat = aux.getElement<AutoConnectText>("resultat_api");
+    resultat.value = resultatAPI;
+
+    return String();
+}
+
+// Funció de transció quan es crida la pàgina - Escriure
+
+String entradaPageAPIW(AutoConnectAux& aux, PageArgument& args) {
+
+    // Guardem la nova petició
+    cridaAPI = Server.arg("textAPI_api");
+
+    return String();
+}
+
+
+// Funció de transció quan es crida la pàgina
+
+String entradaPageApiSants(AutoConnectAux& aux, PageArgument& args) {
+    String resultatAPI;
+
+    resultatAPI = apiSants(Server.arg("textAPI_api_dia").toInt(), Server.arg("textAPI_api_mes").toInt());
 
     AutoConnectText& resultat = aux.getElement<AutoConnectText>("resultat_api");
     resultat.value = resultatAPI;
@@ -765,24 +796,44 @@ String entradaPageAPI(AutoConnectAux& aux, PageArgument& args) {
 
 // Funció de transció quan es crida la pàgina
 
-String entradaPageReset(AutoConnectAux& aux, PageArgument& args) {
+String entradaPageReboot(AutoConnectAux& aux, PageArgument& args) {
 
     ESP.restart();
 
     return String();
 }
 
-String conexioAPI(String peticio){
+
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Gestió APIs                                  //
+//                                              //
+//////////////////////////////////////////////////
+
+
+// Gestió APIs
+
+String getApiResult(String peticio){
+
+    // Per saber com deserialitzar!!!
+    //https://arduinojson.org/v6/assistant/
 
     HTTPClient http;
     String payload;
     
     // incialitzem client APIs
+    Serial.println(peticio);
+    
     http.begin(peticio);
+
     int httpCode = http.GET();  //Make the request
 
     if (httpCode > 0) { //Check for the returning code
         payload = http.getString();
+        // TODO: Modificar a ---> http.getStream
+        
         Serial.println(httpCode);
         Serial.println(payload);
     } else {
@@ -792,11 +843,124 @@ String conexioAPI(String peticio){
 
     http.end(); // Alliberem la conexió
 
+    //return(payload);
     return(payload);
 }
 
 
- 
+ // API SANTS ;D 
+ // Retorna un String amb els Sants
+
+
+String apiSants (int dia, int mes) {
+
+    String peticio;
+    String strRetornat;
+
+    peticio = "https://api.abalin.net/namedays?country=es&month=" + String(mes) + "&day=" + String(dia);
+
+    cridaAPI = peticio; // Per debugar. TODO -> Mes endavant no caldrà
+
+    String jsonStr;
+    jsonStr = getApiResult(peticio);
+    jsonStr.replace('\\', '_'); // TODO: S'ha de completar amb caractes Unicode
+
+    DeserializationError error = deserializeJson(doc, jsonStr);
+
+    Serial.println("Deserialitzat");
+
+    if (error) {
+        Serial.println("ERROR: Lectura Json : ");
+        Serial.println(jsonStr);
+        strRetornat = jsonStr;
+    } else {
+
+        if (doc.containsKey("data")) {
+            const char* resultat = doc["data"][0]["namedays"]["es"];
+            strRetornat = String(resultat);
+        } else{
+            strRetornat = String("La API respon amb un error : " + String(jsonStr));
+        }
+
+    }
+
+    return(strRetornat);
+    
+
+}
+
+
+// NO FUNCIONA!!!!!!!!!!!!!!!!!!!!!!!!!
+
+void apiFootBallData() {
+
+    //https://www.football-data.org/documentation/quickstart/
+
+    HTTPClient http;
+    String payload;
+    
+    // incialitzem client APIs
+    http.begin("https://api.football-data.org/v2/teams/86/matches?status=SCHEDULED/limit/3/");
+    http.setAuthorization("xxx");
+
+    int httpCode = http.GET();  //Make the request
+
+    if (httpCode > 0) { //Check for the returning code
+        //payload = http.getString();/////////////////////////////////////////////////////////////////
+        // TODO: Modificar a ---> http.getStream
+        
+        Serial.println(httpCode);
+        Serial.println(payload);
+    } else {
+        Serial.print("Error on HTTP request : ");
+        Serial.println(httpCode);
+    }
+
+    http.end(); // Alliberem la conexió
+
+
+}
+
+
+
+// NO FUNCIONA!!!!!!!!!!!!!!!!!!!!!!!!!
+
+void apiFootball() {
+    //https://www.football-data.org/documentation/samples
+
+    HTTPClient http;
+    WiFiClient payload;
+    
+    String peticio = "https://www.sport.es/es/directos/";
+
+    // incialitzem client APIs
+    http.begin(peticio);
+
+
+    int httpCode = http.GET();  //Make the request
+
+    Serial.println("Peticio Feta");
+
+    if (httpCode > 0) { //Check for the returning code
+        payload = http.getStream();
+        // TODO: Modificar a ---> http.getStream
+        Serial.println(httpCode);
+    } else {
+        Serial.print("Error on HTTP request : ");
+        Serial.println(httpCode);
+    }
+
+    http.end(); // Alliberem la conexió 
+
+
+    Serial.println(payload.find("<div class=\"match\">"));
+
+    //payload.indexOf("<div class=\"match\">", 0);
+    //Serial.println(payload.substring(10));
+
+}
+
+
     
 
 
