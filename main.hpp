@@ -32,7 +32,8 @@ void fixaPeriodeExecucioLoop();
 String getApiResult(String peticio, String XAuth="res");
 String apiSants (int dia, int mes);
 String apiFootBallData();
-
+String apiICScalendar();
+String subStringEntreParaules(String text, String inicial, String final, int indexInicial=0);
 
 //////////////////////////////////////////////////
 //                                              //

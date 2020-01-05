@@ -549,6 +549,7 @@ void rootPage() {
     "<p style=\"text-align: center;font-size:5vw;font-family:Arial;\"><span style=\"text-align: center; color: #0000ff;\"><span style=\"color: #ff0000;\"><strong> Rellotge Adolfo &amp; Xavi </strong></span></span></p>"
     "<p style=\"text-align: center;font-family:Arial;\">{{hora}}</p>"
     "<p style=\"text-align: center;font-family:Arial;\">{{mode}}</p>"
+    "<p style=\"text-align: center;font-family:Arial;\">AVUI: {{eventDia}}</p>"
     "<p style=\"padding-top:15px;text-align:center\">" AUTOCONNECT_LINK(COG_24) "</p>";
 
     String peu =
@@ -584,6 +585,7 @@ void rootPage() {
     capcelera.replace("{{hora}}", String(hora24) + " : " + String(minut));
     capcelera.replace("{{mode}}", String(textMode.c_str()));
     capcelera.replace("{{tempsReload}}", String(reloadPaginaPrinc));
+    capcelera.replace("{{eventDia}}", apiICScalendar());
 
     taula.replace("{{styleWEB}}", param.textStyleWEB);
     
@@ -873,7 +875,7 @@ String getApiResult(String peticio, String XAuth){
         // TODO: Modificar a ---> http.getStream
         
         Serial.println(httpCode);
-        Serial.println(payload);
+        //Serial.println(payload);
     } else {
         Serial.print("Error on HTTP request : ");
         Serial.println(httpCode);
@@ -979,6 +981,49 @@ String apiFootBallData() {
     Serial.println(strRetornat);
     return(strRetornat);
 
+}
+
+
+String apiICScalendar() {
+
+    char dades[8];
+    String diaAvui;
+    String peticio;
+    String strRetornat;
+
+    peticio = "https://calendar.google.com/calendar/ical/m5qnigr8bu7549j2aikf8o869g%40group.calendar.google.com/private-68d3004a5a28ae3a9257d08092d123d9/basic.ics";
+
+    cridaAPI = peticio; // Debug. No caldrà més endavant
+
+    // Calculem el string que identifica el dia
+    sprintf(dades, "%04d%02d%02d", any, mes, dia);
+    diaAvui = String("DTSTART:") + String(dades);
+
+    //Serial.println(diaAvui);
+
+    String icsCalendar = getApiResult(peticio);
+
+    int indexAvui = icsCalendar.indexOf(diaAvui,0);
+    //Serial.println(indexAvui);
+    strRetornat = subStringEntreParaules(icsCalendar, "SUMMARY", "TRANSP", indexAvui); // aqui es on hi ha el titol del event
+    return(strRetornat);
+
+}
+
+String subStringEntreParaules(String text, String inicial, String final, int indexInicial){
+    
+    int startDate = text.indexOf(inicial, indexInicial);
+    int endDate = text.indexOf(final,startDate);
+    String strResposta = text.substring(startDate + inicial.length(), endDate);
+
+    Serial.print("Inicial:");
+    Serial.println(startDate);
+    Serial.print("Final:");
+    Serial.println(endDate);
+    Serial.print("Text:");
+    Serial.println(strResposta);
+
+    return(strResposta);
 }
 
 

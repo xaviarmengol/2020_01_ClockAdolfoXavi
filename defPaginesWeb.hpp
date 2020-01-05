@@ -115,6 +115,7 @@ ACInput(textAPI_api, "", "Petició de la API", "");
 ACText(resultat_api, "...", "font-family:serif;color:#4682b4;");
 ACSubmit(conf_api, "Llançar la petició de la API", "/api");
 ACSubmit(guardar_api, "Guardar nova petició", "/api_w");
+ACElement(calendari_google, "<iframe src=\"https://calendar.google.com/calendar/embed?height=600&amp;wkst=1&amp;bgcolor=%23ffffff&amp;ctz=Europe%2FMadrid&amp;src=bTVxbmlncjhidTc1NDlqMmFpa2Y4bzg2OWdAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&amp;color=%23871111&amp;title=Calendari%20Rellotge%20Adolfo%26Xavi\" style=\"border:solid 1px #777\" width=\"800\" height=\"600\" frameborder=\"0\" scrolling=\"no\"></iframe>");
 
 AutoConnectAux PageAPI ("/api", "Test APIs", true, {
     header_api,
@@ -123,7 +124,8 @@ AutoConnectAux PageAPI ("/api", "Test APIs", true, {
     guardar_api,
     resultat_api,
     conf_api,
-    home
+    home,
+    calendari_google
 });
 
 
