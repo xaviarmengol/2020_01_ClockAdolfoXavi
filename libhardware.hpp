@@ -4,15 +4,14 @@
 #include "Arduino.h"
 
 
-void imprimeixEstat(int millis);
+
 
 class FiltreTouch
 {
 private:
     int _inputPin;
     int _llindar;
-    int _minMillis;
-    bool _flanc;
+    unsigned long _minMillis;
 
     bool _estat=false;
     bool _ultimEstat=false;
@@ -21,16 +20,20 @@ private:
     int _valorRaw;
     bool _valor;
     bool _ultimValor=false;
+    float _valorAcum=0.0;
 
-    int _ultimaConmutacioMillis;
+    unsigned long _ultimaConmutacioMillis;
+    unsigned long _deltaMillis;
 
     bool touchToBool(uint16_t entradaTouch, uint16_t llindar);
 
 public:
     FiltreTouch();
-    void iniciaFiltreTouch(int iPin, int llindar, int minMillis, bool flanc);
+    void iniciaFiltreTouch(int iPin, unsigned long minMillis, int llindar);
     int getValorRaw();
-    bool llegeix();
+    void llegeix();
+    bool estat(); // estat del boto
+    bool apretat(); // flanc pujada
 };
 
 #endif

@@ -1,14 +1,17 @@
 #ifndef MAIN_HPP_INCLUDED
 #define MAIN_HPP_INCLUDED
 
+// Hardware
 #include <Arduino.h>
+//#include "JC_Button.h"
+#include "libhardware.hpp"
+
 #include <WebServer.h>
 #include <AutoConnect.h>
 #include <NTPClient.h>
 
 #include "VectorArd.h"
 #include "libdisplayclassArd.hpp"
-#include "libhardware.hpp"
 
 #include "HTTPUpdateServer.h"
 #define HOSTIDENTIFY  "esp32"
@@ -24,6 +27,7 @@ using namespace std;
 
 void rootPage();
 
+void imprimeixEstat(int millis);
 void canvisModes();
 void estatModes();
 void actualitzaHora();
@@ -121,7 +125,7 @@ HTTPUpdateServer httpUpdater;
 AutoConnectAux  update("/update", "Update");
 
 String cridaAPI = "https://api.abalin.net/namedays?country=es&month=7&day=23";
-String cridaAPIfb = "https://api.football-data.org/v2/teams/81/matches?dateFrom=2019-12-21&dateTo=2020-01-02&limit=1";
+String cridaAPIfb = "https://api.football-data.org/v2/teams/81/matches?dateFrom=2020-01-04&dateTo=2020-01-04&limit=1";
 
 
 //////////////////////////////////////////////////
@@ -157,8 +161,14 @@ bool errorConexioNTP = false;
 //////////////////////////////////////////////////
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(10*11, 2, NEO_GRB + NEO_KHZ800);
+
+//Modificació sobre -> https://github.com/JChristensen/JC_Button
 FiltreTouch touchInputA, touchInputB;
 bool touchA, touchB;
+
+//Button touchInputA(0, 100, false, false, true, 30);
+//Button touchInputB(0, 100, false, false, true, 30);
+
 int puntsExteriors = 0;
 
 
@@ -174,14 +184,6 @@ struct DiaEspecial{
     string dia;
     string text;
 };
-
-DiaEspecial diesEspecials[10] =  {
-{"2-3", "Felicitats Inma"},
-{"23-11", "Felicitats XAVI!" },
-{"25-12", "BON NADAL!"},
-{"27-12", "Adolfo, Felicidades!" }
-};
-
 
 
 

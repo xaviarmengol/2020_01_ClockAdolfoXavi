@@ -9,24 +9,28 @@ FiltreTouch::FiltreTouch(){
 
 }
 
-void FiltreTouch::iniciaFiltreTouch(int iPin, int llindar, int minMillis, bool flanc) {
+void FiltreTouch::iniciaFiltreTouch(int iPin, unsigned long minMillis, int llindar) {
     _inputPin = iPin;
     _minMillis = minMillis;
     _llindar = llindar;
-    _flanc = flanc;
 }
 
-bool FiltreTouch::llegeix(){
+void FiltreTouch::llegeix(){
 
     _valorRaw = touchRead(_inputPin);
     _valor = touchToBool(_valorRaw, _llindar);
 
-    if (_valor != _ultimValor){
+    //if (_valor) _valorAcum = _valorAcum+1.0; // agreguem el valor per simular un condensador
+
+    if (_valor != _ultimValor){ // en cas de canvi, reseteja comptador
         _ultimaConmutacioMillis = millis();
     }
 
-    if ((millis() - _ultimaConmutacioMillis) > _minMillis){
-        _estat = _valor;
+    _deltaMillis = millis() - _ultimaConmutacioMillis;
+
+    if (_deltaMillis > _minMillis){
+       // _estat = ((_valor/(float)_deltaMillis)>0.5)? 1 : 0; // comparem si ha estat a 1 més de la meitat del temps
+       _estat = _valor;
     }
 
     // Flanc pujada només
@@ -36,8 +40,6 @@ bool FiltreTouch::llegeix(){
     _ultimValor = _valor;
     _ultimEstat = _estat;
     
-    if (_flanc) return (_estatFlanc);
-    else return (_estat);
 }
 
 int FiltreTouch::getValorRaw(){
@@ -50,4 +52,15 @@ bool FiltreTouch::touchToBool(uint16_t entradaTouch, uint16_t llindar){
     return(entradaTouch <= llindar);
 }
 
+bool FiltreTouch::estat(){
+    return(_estat);
+}
+
+bool FiltreTouch::apretat(){
+    if (_estatFlanc) {
+        Serial.print("Apretat : ");
+        Serial.println(getValorRaw());
+    }
+    return(_estatFlanc);
+}
 

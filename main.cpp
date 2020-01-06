@@ -1,6 +1,7 @@
 // Llibreries de Hardware
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
+#include "libhardware.hpp"
 
 // Llibreries de WEB
 #include <WiFi.h>
@@ -28,8 +29,8 @@
 #include "main.hpp"
 #include "libidiomes.hpp"
 #include "libdisplayclassArd.hpp"
-#include "libhardware.hpp"
 #include "defPaginesWeb.hpp"
+#include "secrets/secrets.h"
 
 using namespace std;
 
@@ -64,8 +65,8 @@ void setup() {
     // Inicialitzem Autoconnect (WEB)
 
     Config.title = "Menú WiFi - Rellotge";
-    Config.apid = "rellotge_IOT";
-    Config.psk  = "12345678"; //12345678
+    Config.apid = AUTOCONNECTSSID;
+    Config.psk  = AUTOCONNECTPASS;
     Config.autoReconnect = true; // Autoreconectar a la WIFI anterior
     Portal.config(Config);
 
@@ -128,10 +129,10 @@ void setup() {
     pixels.show();
     pixels.setPin(param.pinOut);
 
-    pinMode(0,INPUT);
-    pinMode(4,INPUT);
-    touchInputA.iniciaFiltreTouch(0, 30, 100, true);
-    touchInputB.iniciaFiltreTouch(4, 30, 100, true);
+    touchInputA.iniciaFiltreTouch(0, 100, 30);
+    touchInputB.iniciaFiltreTouch(4, 100, 30);
+    //touchInputA.begin();
+    //touchInputB.begin();
 
 
     // Gestió del Delay
@@ -152,8 +153,8 @@ void loop() {
 
     // Llegim HARDWARE
 
-    touchA = touchInputA.llegeix();
-    touchB = touchInputB.llegeix();
+    touchInputA.llegeix();
+    touchInputB.llegeix();
 
     millisEsperant = millis()-lastMillis;
 
@@ -218,7 +219,9 @@ void fixaPeriodeExecucioLoop(){
     if (tempsDeCicle<=cicleLoop){
         //Serial.print("Cicle Max =  " + String(cicleLoop));
         //Serial.println("Cicle Real = " + String(tempsDeCicle));
+        
         delay(cicleLoop-tempsDeCicle);
+
     } else {
         Serial.print("WATCH DOG ---> Cicle Max =  " + String(cicleLoop));
         Serial.println("Cicle Real = " + String(tempsDeCicle));
@@ -252,11 +255,11 @@ void imprimeixEstat(int millis){
     Serial.println(DateTime.now());
     Serial.println(timeClient.getEpochTime());
     Serial.print("A->");
-    Serial.print(touchA);
+    Serial.print(touchInputA.estat());
     Serial.print(">>");
     Serial.println(touchInputA.getValorRaw());
     Serial.print("B->");
-    Serial.print(touchB);
+    Serial.print(touchInputB.estat());
     Serial.print(">>");
     Serial.println(touchInputB.getValorRaw());
     Serial.println(strHoraOrigen);
@@ -360,12 +363,12 @@ void actualitzaHora(){
 void canvisModes() {
 
     // si està fora del menu, i toca la tecla B
-    if (touchB && modeOperacio<100) {
+    if (touchInputB.apretat() && modeOperacio<100) {
 
         modeOperacio = (modeOperacio + 1) % TOTALMODES;
         matriu.resetTimmer();
 
-    } else if (touchA) { // entrada al menu
+    } else if (touchInputA.apretat()) { // entrada al menu
 
         matriu.resetTimmer();
 
@@ -384,7 +387,7 @@ void canvisModes() {
             matriu.resetTimmer();
         }
 
-    } else if (touchB && modeOperacio>=100){ // tecla modificació de valor
+    } else if (touchInputB.apretat() && modeOperacio>=100){ // tecla modificació de valor
 
         if (modeOperacio==100) DateTime.syncIncreaseHour();
         else if (modeOperacio==101) DateTime.syncIncreaseMinute();
@@ -947,7 +950,7 @@ String apiFootBallData() {
     //peticio = "https://api.football-data.org/v2/teams/81/matches?dateFrom=2019-12-21&dateTo=2020-01-02&limit=1";
     
     //cridaAPI = peticio;
-    clauXToken = "xxx";
+    clauXToken = APIFOOTBALLKEY;
 
     String jsonStr;
     jsonStr = getApiResult(cridaAPIfb, clauXToken);
@@ -991,7 +994,7 @@ String apiICScalendar() {
     String peticio;
     String strRetornat;
 
-    peticio = "https://calendar.google.com/calendar/ical/m5qnigr8bu7549j2aikf8o869g%40group.calendar.google.com/private-68d3004a5a28ae3a9257d08092d123d9/basic.ics";
+    peticio = ICSFILE; 
 
     cridaAPI = peticio; // Debug. No caldrà més endavant
 
@@ -1012,9 +1015,12 @@ String apiICScalendar() {
 
 String subStringEntreParaules(String text, String inicial, String final, int indexInicial){
     
+    String strResposta;
     int startDate = text.indexOf(inicial, indexInicial);
     int endDate = text.indexOf(final,startDate);
-    String strResposta = text.substring(startDate + inicial.length(), endDate);
+
+    if ((startDate == -1) || (endDate==-1)) strResposta = ""; 
+    else strResposta = text.substring(startDate + inicial.length(), endDate);
 
     Serial.print("Inicial:");
     Serial.println(startDate);
