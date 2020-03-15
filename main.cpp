@@ -1,41 +1,4 @@
-// Llibreries de Hardware
-#include <Arduino.h>
-#include <Adafruit_NeoPixel.h>
-#include "libhardware.hpp"
-
-// Llibreries de WEB
-#include <WiFi.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
-#include <WebServer.h>
-#include <HTTPClient.h> // conectar a APIs
-
-// Llibreria d'autoconnexió WiFi (client + servidor)
-#include <AutoConnect.h>
-
-// JSON
-#include <ArduinoJson.h>
-
-// Llibreria temps offline (https://github.com/hickey/arduino/tree/master/Libraries/DateTime/DateTime)
-#include <Datetime.h>
-
-//OTA 
-#include <HTTPUpdate.h>
-#include <WiFiClient.h>
-#include <ESPmDNS.h>
-#include "HTTPUpdateServer.h"
-
-//Llibreries aplicació
 #include "main.hpp"
-#include "libidiomes.hpp"
-#include "libdisplayclassArd.hpp"
-#include "defPaginesWeb.hpp"
-#include "secrets/secrets.h"
-
-using namespace std;
-
-//TODO Netejar includes. Ja estan al main.hpp?
-
 
 //////////////////////////////////////////////////
 //                                              //
@@ -43,11 +6,15 @@ using namespace std;
 //                                              //
 //////////////////////////////////////////////////
 
-
 void setup() {
 
     Serial.begin(115200);
     Serial.println("Arranca Setup");
+
+    // Web Portal will be declared in a independent task pinned to the second core (0). 
+    // (Loop is always pinned to core (1))
+
+    xTaskCreateUniversal(tskWebPortal, "TaskWebPortal", 10000, NULL, 1, &handTskWebPortal, 0);
 
     // Inicialitzem Paràmetres
 
@@ -90,6 +57,7 @@ void setup() {
     
     Server.on("/", rootPage);
 
+
     if (Portal.begin()) {
         Serial.println("WiFi connected: " + WiFi.localIP().toString());
     }
@@ -125,15 +93,23 @@ void setup() {
 
     // Inicialitzem HARDWARE
 
-    pixels.begin(); // LEDs
-    pixels.show();
-    pixels.setPin(param.pinOut);
+    // Matriu de leds
+    matrix.begin(); // LEDs
+    matrix.setTextWrap(false);
+    matrix.setBrightness(20);
+    matrix.show();
+    matrix.setPin(param.pinOut);
+
+    // OLED 0.96
+    // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+        Serial.println(F("SSD1306 allocation failed"));
+        for(;;); // Don't proceed, loop forever
+    }
+    display.clearDisplay();
 
     touchInputA.iniciaFiltreTouch(0, 100, 30);
     touchInputB.iniciaFiltreTouch(4, 100, 30);
-    //touchInputA.begin();
-    //touchInputB.begin();
-
 
     // Gestió del Delay
 
@@ -183,25 +159,44 @@ void loop() {
 
         // Gestió hardware
 
-        matriu.imprimexMatriuLed(pixels, param.pinOut, pixels.Color(127, 127, 127), pixels.Color(0, 0, 0));
+        //matriu.imprimexMatriuLed(matrix, param.pinOut, matrix.Color(50, 50, 50), matrix.Color(0, 0, 0));
+        matriu.imprimexMatriuOLED96(display);
         
         // PER DEGBUGAR;
-        imprimeixEstat(2000);
+        //imprimeixEstat(2000);
         //matriu.imprimexMatriu();
 
         // Delay
         lastMillis = millis();
     }
-    
+
 
     // Gestió del Autoconnect (WEB)
 
-    Portal.handleClient();
-
     fixaPeriodeExecucioLoop(); // per mantenir un temps de scan limitat
 
-    
 }
+
+
+
+//////////////////////////////////////////////////
+//                                              //
+// Task on s'executa el portal WEB              //
+//                                              //
+//////////////////////////////////////////////////
+
+
+void tskWebPortal (void *pvParameters){
+
+    Serial.println("Task: Web Portal running on core " + String(xPortGetCoreID()));
+
+    while (true) {
+        Portal.handleClient();
+        vTaskDelay(10);
+    }
+
+}
+
 
 
 //////////////////////////////////////////////////
@@ -224,7 +219,7 @@ void fixaPeriodeExecucioLoop(){
 
     } else {
         Serial.print("WATCH DOG ---> Cicle Max =  " + String(cicleLoop));
-        Serial.println("Cicle Real = " + String(tempsDeCicle));
+        Serial.println(" Cicle Real = " + String(tempsDeCicle));
     }
 
     lastMillisCicleLoop = millis();
@@ -533,6 +528,8 @@ void estatModes() {
 // AutoConnect: Pàgines i transicións           //
 //                                              //
 //////////////////////////////////////////////////
+
+
 
 // Definició de la pàgina principal
 
@@ -851,6 +848,10 @@ String entradaPageReboot(AutoConnectAux& aux, PageArgument& args) {
 //                                              //
 //////////////////////////////////////////////////
 
+// Weather API:
+//https://github.com/ThingPulse/esp8266-weather-station
+
+// Incloure BORSA i Openweather APIs!!!
 
 // Gestió APIs
 

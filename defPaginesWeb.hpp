@@ -4,6 +4,10 @@
 #include <AutoConnect.h>
 #include <main.hpp>
 
+// TODO: Perque no ho agafa del main.hpp?
+const int TOTALIDIOMES = 2;
+const string IDIOMASTRLIST[TOTALIDIOMES] = {"CAT", "ESP"};
+
 //////////////////////////////////////////////////
 //                                              //
 // Definicions del Autoconnect (WEB)            //

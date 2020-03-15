@@ -3,7 +3,9 @@
 
 #include "VectorArd.h"
 
-#include <Adafruit_NeoPixel.h>
+//#include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoMatrix.h>
+#include <Adafruit_SSD1306.h>
 
 #define DIM_FIL 10
 #define DIM_COL 11
@@ -29,7 +31,8 @@ class Matriu {
         Matriu();
 
         void imprimexMatriu();
-        void imprimexMatriuLed(Adafruit_NeoPixel &pixels, int pinOut, uint32_t colorOn, uint32_t colorOff);
+        void imprimexMatriuLed(Adafruit_NeoMatrix &matrix, int pinOut, uint32_t colorOn, uint32_t colorOff);
+        void imprimexMatriuOLED96(Adafruit_SSD1306 &display);
 
         void setMatriuOff();
         void cuadratAMatriu(int filIni, int colIni, int filEnd, int colEnd, bool valor, int offSetFil=0, int offSetCol=0);

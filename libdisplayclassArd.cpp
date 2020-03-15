@@ -5,7 +5,9 @@
 #include "libidiomes.hpp"
 #include "libdisplayclassArd.hpp"
 #include "VectorArd.h"
-#include <Adafruit_NeoPixel.h>
+//#include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoMatrix.h>
+#include <Adafruit_SSD1306.h>
 
 using namespace std;
 
@@ -106,7 +108,7 @@ uint64_t Matriu::getImatgeDeCar(char car){
 
 uint64_t Matriu::getImatgeDeNum(int valor){
 
-    return getImatgeDeCar(char(48+valor));
+    return LLETRES[82+valor];//getImatgeDeCar(char(48+valor));
 }
 
 //////////////////////////////////////////////////
@@ -372,16 +374,18 @@ char Matriu::getLletraIdioma (int fila, int col, int idioma){
 
 // Gestiona la tira de leds. Cada led es gestiona via una adreça seqüencial amb la llibreria Adafruit Neopixel
 
-void Matriu::imprimexMatriuLed(Adafruit_NeoPixel &pixels, int pinOut, uint32_t colorOn, uint32_t colorOff){
+void Matriu::imprimexMatriuLed(Adafruit_NeoMatrix &matrix, int pinOut, uint32_t colorOn, uint32_t colorOff){
 
-    bool actualitzaSempre = false; // Només actualitza quant hi ha un canvi d'estat
+    bool actualitzaSempre = true; // Només actualitza quant hi ha un canvi d'estat
     int numLed;
 
     // Modifiquem el pin de sortida si es necessari
     if (pinOut != _pinOut) {
         _pinOut = pinOut;
-        pixels.setPin(_pinOut);
+        matrix.setPin(_pinOut);
     }
+
+    matrix.clear();
 
     for (int i=0; i<_nFil; i++){
         for (int j=0; j<_nCol; j++){
@@ -389,18 +393,59 @@ void Matriu::imprimexMatriuLed(Adafruit_NeoPixel &pixels, int pinOut, uint32_t c
 
                 numLed = _nFil*i + j; // Direcció de la tira de leds
                 if (getMatriuPunt(i,j)) 
-                    pixels.setPixelColor(numLed, colorOn);
-                else 
-                    pixels.setPixelColor(numLed, colorOff);
+                    //pixels.setPixelColor(numLed, colorOn);
+                    matrix.writePixel(j,i,colorOn);
+                //else 
+                    //matrix.writePixel(j,i,colorOff);
+                    
 
             }
         }
     }
 
-    pixels.show(); /// Veure si s'ha d'activar a cada pixel o no TODO!!!
+    matrix.show(); 
 
     guardaEstatMatriu();
 }
+
+
+//////////////////////////////////////////////////
+//                                              //
+// HARDWARE: SORTIDA DE LA MATRIU A OLE 0.96    //
+//                                              //
+//////////////////////////////////////////////////
+
+
+
+void Matriu::imprimexMatriuOLED96(Adafruit_SSD1306 &display){
+
+    int prop=6;
+    int offX=0;
+    int offY=0;
+
+    display.clearDisplay();
+
+    for (int i=0; i<_nFil; i++){
+        for (int j=0; j<_nCol; j++){
+
+            if (getMatriuPunt(i,j)) {
+                display.fillRect(offX + j*prop, offY + i*prop, prop-1, prop-1, WHITE);
+                //display.drawPixel(j,i,WHITE);
+                
+            }
+
+        }
+    }
+
+    //display.setCursor(0,0);
+    //display.
+
+    display.display();
+
+}
+
+
+
 
 //////////////////////////////////////////////////
 //                                              //

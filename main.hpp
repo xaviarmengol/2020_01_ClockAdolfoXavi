@@ -5,10 +5,34 @@
 #include <Arduino.h>
 //#include "JC_Button.h"
 #include "libhardware.hpp"
+#include "libidiomes.hpp"
+#include "libdisplayclassArd.hpp"
+#include "defPaginesWeb.hpp"
+#include "secrets/secrets.h"
 
+#include <Adafruit_NeoMatrix.h>
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include <WiFi.h>
+#include <WiFiUdp.h>
 #include <WebServer.h>
 #include <AutoConnect.h>
 #include <NTPClient.h>
+#include <HTTPClient.h> // conectar a APIs
+#include <ArduinoJson.h> // Tractar JSON
+
+// Llibreria temps offline (https://github.com/hickey/arduino/tree/master/Libraries/DateTime/DateTime)
+#include <Datetime.h>
+
+//OTA 
+#include <HTTPUpdate.h>
+#include <WiFiClient.h>
+#include <ESPmDNS.h>
+
 
 #include "VectorArd.h"
 #include "libdisplayclassArd.hpp"
@@ -18,6 +42,22 @@
 #define mDNSUpdate(c)  do {} while(0)
 
 using namespace std;
+
+// redirect per conectar a google
+//https://github.com/electronicsguy/ESP8266/tree/master/HTTPSRedirect
+
+//////////////////////////////////////////////////
+//                                              //
+// Tasks definition                             //
+//                                              //
+//////////////////////////////////////////////////
+
+// Main task is running in "loop" that is pinned to core 1
+// Web portal will be pinned in another task
+
+TaskHandle_t handTskWebPortal;
+void tskWebPortal (void *pvParameters);
+
 
 //////////////////////////////////////////////////
 //                                              //
@@ -54,6 +94,18 @@ struct param_t {
     String textStyleWEB;
 };
 
+//////////////////////////////////////////////////
+//                                              //
+// Definició estructura paràmetres              //
+//                                              //
+//////////////////////////////////////////////////
+
+param_t param;
+
+struct DiaEspecial{
+    string dia;
+    string text;
+};
 
 
 //////////////////////////////////////////////////
@@ -70,10 +122,10 @@ bool arrancFred = true;
 
 const int NUMMENU = 5;
 
-const int TOTALIDIOMES = 2;
+//const int TOTALIDIOMES = 2;
 const int TOTALMODES = 7;
 const string MODESTRLIST[TOTALMODES] = {"STD", "SEG", "24H", "TXT", "LED", "H:M", "TEST"};
-const string IDIOMASTRLIST[TOTALIDIOMES] = {"CAT", "ESP"};
+//const string IDIOMASTRLIST[TOTALIDIOMES] = {"CAT", "ESP"};
 
 string textHora="";
 string textHoraAntic="";
@@ -98,7 +150,7 @@ unsigned long millisDelay=100;
 unsigned long lastMillis=0;
 unsigned long millisEsperant;
 
-unsigned long cicleLoop = 10;
+unsigned long cicleLoop = 50;
 unsigned long tempsDeCicle;
 unsigned long lastMillisCicleLoop;
 
@@ -160,7 +212,16 @@ bool errorConexioNTP = false;
 //                                              //
 //////////////////////////////////////////////////
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(10*11, 2, NEO_GRB + NEO_KHZ800);
+//Adafruit_NeoPixel pixels = Adafruit_NeoPixel(16*16, param.pinOut, NEO_GRB + NEO_KHZ800);
+
+Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(16, 16, param.pinOut,
+  NEO_MATRIX_TOP     + NEO_MATRIX_LEFT +
+  NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
+  NEO_GRB            + NEO_KHZ800);
+
+
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
 
 //Modificació sobre -> https://github.com/JChristensen/JC_Button
 FiltreTouch touchInputA, touchInputB;
@@ -170,20 +231,6 @@ bool touchA, touchB;
 //Button touchInputB(0, 100, false, false, true, 30);
 
 int puntsExteriors = 0;
-
-
-//////////////////////////////////////////////////
-//                                              //
-// Definició estructura paràmetres              //
-//                                              //
-//////////////////////////////////////////////////
-
-param_t param;
-
-struct DiaEspecial{
-    string dia;
-    string text;
-};
 
 
 
