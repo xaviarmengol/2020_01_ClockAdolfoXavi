@@ -5,8 +5,8 @@
 #include "libidiomes.hpp"
 #include "libdisplayclassArd.hpp"
 #include "VectorArd.h"
-//#include <Adafruit_NeoPixel.h>
-#include <Adafruit_NeoMatrix.h>
+
+
 #include <Adafruit_SSD1306.h>
 
 using namespace std;
@@ -373,11 +373,10 @@ char Matriu::getLletraIdioma (int fila, int col, int idioma){
 //////////////////////////////////////////////////
 
 // Gestiona la tira de leds. Cada led es gestiona via una adreça seqüencial amb la llibreria Adafruit Neopixel
-
+/*
 void Matriu::imprimexMatriuLed(Adafruit_NeoMatrix &matrix, int pinOut, uint32_t colorOn, uint32_t colorOff){
 
     bool actualitzaSempre = true; // Només actualitza quant hi ha un canvi d'estat
-    int numLed;
 
     // Modifiquem el pin de sortida si es necessari
     if (pinOut != _pinOut) {
@@ -391,7 +390,6 @@ void Matriu::imprimexMatriuLed(Adafruit_NeoMatrix &matrix, int pinOut, uint32_t 
         for (int j=0; j<_nCol; j++){
             if ((_old_matriu[i][j] !=_matriu[i][j]) || actualitzaSempre) {
 
-                numLed = _nFil*i + j; // Direcció de la tira de leds
                 if (getMatriuPunt(i,j)) 
                     //pixels.setPixelColor(numLed, colorOn);
                     matrix.writePixel(j,i,colorOn);
@@ -407,6 +405,64 @@ void Matriu::imprimexMatriuLed(Adafruit_NeoMatrix &matrix, int pinOut, uint32_t 
 
     guardaEstatMatriu();
 }
+*/
+
+
+
+void Matriu::imprimexMatriuLedFast(CRGB* const ledsParam){
+
+    int offsetI=3;
+    int offsetJ=2;
+
+    for (int i=0; i<16; i++){
+        for (int j=0; j<16; j++){
+
+            if (i<offsetI || i>=(offsetI+_nFil) || j<offsetJ || j>=(offsetJ+_nCol)) {
+                ledsParam[ getAbsoluteIndexFromXY(i, j)]  = CHSV( 90, 30, 30);
+            } else {
+
+                if (getMatriuPunt(i-offsetI,j-offsetJ)) 
+                    ledsParam[ getAbsoluteIndexFromXY(i, j)]  = CHSV( 50, 50, 50);
+                else 
+                    ledsParam[ getAbsoluteIndexFromXY(i, j)]  = CHSV( 0, 0, 0);
+
+            }
+                    
+        }
+    }
+
+    FastLED.show();
+
+    guardaEstatMatriu();
+}
+
+uint16_t Matriu::getAbsoluteIndexFromXY(int x, int y){
+
+    uint16_t i;
+    const bool kMatrixSerpentineLayout = true;
+    const int numColHardware  = 16;
+
+    //TODO: Arreglar les classes. Això s'ha de treure d'aqui!!!
+  
+
+    if( kMatrixSerpentineLayout == false) {
+        i = (y * numColHardware) + x;
+    }
+
+    if( kMatrixSerpentineLayout == true) {
+        if( y & 0x01) {
+        // Odd rows run backwards
+        uint8_t reverseX = (numColHardware - 1) - x;
+        i = (y * numColHardware) + reverseX;
+        } else {
+        // Even rows run forwards
+        i = (y * numColHardware) + x;
+        }
+    }
+    
+    return i;
+}
+
 
 
 //////////////////////////////////////////////////

@@ -1,3 +1,4 @@
+
 #include "main.hpp"
 
 //////////////////////////////////////////////////
@@ -6,10 +7,14 @@
 //                                              //
 //////////////////////////////////////////////////
 
+
+
 void setup() {
 
     Serial.begin(115200);
     Serial.println("Arranca Setup");
+
+    Serial.println(String(WiFi.macAddress()));
 
     // Web Portal will be declared in a independent task pinned to the second core (0). 
     // (Loop is always pinned to core (1))
@@ -94,11 +99,18 @@ void setup() {
     // Inicialitzem HARDWARE
 
     // Matriu de leds
-    matrix.begin(); // LEDs
-    matrix.setTextWrap(false);
-    matrix.setBrightness(20);
-    matrix.show();
-    matrix.setPin(param.pinOut);
+    //matrix.begin(); // LEDs
+    //matrix.setTextWrap(false);
+    //matrix.setBrightness(20);
+    //matrix.show();
+    //matrix.setPin(param.pinOut);
+
+    // Fastled
+    // TODO: Param.pinout l'he posat fixe a 2
+    
+    FastLED.addLeds<CHIPSET, 2, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
+    FastLED.setBrightness( BRIGHTNESS );
+
 
     // OLED 0.96
     // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
@@ -108,9 +120,21 @@ void setup() {
     }
     display.clearDisplay();
 
-    touchInputA.iniciaFiltreTouch(0, 100, 30);
-    touchInputB.iniciaFiltreTouch(4, 100, 30);
+    // Input Setup
 
+    //inputA.configura(0, 100, 30);
+    //inputB.configura(4, 100, 30);
+
+    inputA.configura(0, 100);
+    inputB.configura(4, 100);
+
+
+    // Blynk Setup
+
+    Blynk.config(auth);
+    Blynk.connect();
+
+    
     // Gestió del Delay
 
     lastMillis = millis();
@@ -127,10 +151,14 @@ void setup() {
 
 void loop() {
 
+    // Blynk
+
+    Blynk.run();
+
     // Llegim HARDWARE
 
-    touchInputA.llegeix();
-    touchInputB.llegeix();
+    inputA.llegeix();
+    inputB.llegeix();
 
     millisEsperant = millis()-lastMillis;
 
@@ -160,7 +188,12 @@ void loop() {
         // Gestió hardware
 
         //matriu.imprimexMatriuLed(matrix, param.pinOut, matrix.Color(50, 50, 50), matrix.Color(0, 0, 0));
+        matriu.imprimexMatriuLedFast(leds);
         matriu.imprimexMatriuOLED96(display);
+
+        logValue = inputA.estat();
+
+        //imprimexLogOLED96(display, logText);
         
         // PER DEGBUGAR;
         //imprimeixEstat(2000);
@@ -250,13 +283,13 @@ void imprimeixEstat(int millis){
     Serial.println(DateTime.now());
     Serial.println(timeClient.getEpochTime());
     Serial.print("A->");
-    Serial.print(touchInputA.estat());
+    Serial.print(inputA.estat());
     Serial.print(">>");
-    Serial.println(touchInputA.getValorRaw());
+    Serial.println(inputA.getValorRaw());
     Serial.print("B->");
-    Serial.print(touchInputB.estat());
+    Serial.print(inputB.estat());
     Serial.print(">>");
-    Serial.println(touchInputB.getValorRaw());
+    Serial.println(inputB.getValorRaw());
     Serial.println(strHoraOrigen);
 
     millisDelay = millis;
@@ -358,12 +391,12 @@ void actualitzaHora(){
 void canvisModes() {
 
     // si està fora del menu, i toca la tecla B
-    if (touchInputB.apretat() && modeOperacio<100) {
+    if (inputB.apretat() && modeOperacio<100) {
 
         modeOperacio = (modeOperacio + 1) % TOTALMODES;
         matriu.resetTimmer();
 
-    } else if (touchInputA.apretat()) { // entrada al menu
+    } else if (inputA.apretat()) { // entrada al menu
 
         matriu.resetTimmer();
 
@@ -382,7 +415,7 @@ void canvisModes() {
             matriu.resetTimmer();
         }
 
-    } else if (touchInputB.apretat() && modeOperacio>=100){ // tecla modificació de valor
+    } else if (inputB.apretat() && modeOperacio>=100){ // tecla modificació de valor
 
         if (modeOperacio==100) DateTime.syncIncreaseHour();
         else if (modeOperacio==101) DateTime.syncIncreaseMinute();
@@ -1032,7 +1065,6 @@ String subStringEntreParaules(String text, String inicial, String final, int ind
 
     return(strResposta);
 }
-
 
 
     

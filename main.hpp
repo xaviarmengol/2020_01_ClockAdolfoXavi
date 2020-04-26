@@ -4,13 +4,14 @@
 // Hardware
 #include <Arduino.h>
 //#include "JC_Button.h"
-#include "libhardware.hpp"
+#include "filtreentrada.hpp"
 #include "libidiomes.hpp"
 #include "libdisplayclassArd.hpp"
 #include "defPaginesWeb.hpp"
 #include "secrets/secrets.h"
 
-#include <Adafruit_NeoMatrix.h>
+//#include <Adafruit_NeoMatrix.h>
+#include <FastLED.h>
 
 #include <SPI.h>
 #include <Wire.h>
@@ -213,25 +214,41 @@ bool errorConexioNTP = false;
 //////////////////////////////////////////////////
 
 //Adafruit_NeoPixel pixels = Adafruit_NeoPixel(16*16, param.pinOut, NEO_GRB + NEO_KHZ800);
-
+/*
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(16, 16, param.pinOut,
   NEO_MATRIX_TOP     + NEO_MATRIX_LEFT +
   NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG,
   NEO_GRB            + NEO_KHZ800);
-
+*/
 
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
 
-//Modificació sobre -> https://github.com/JChristensen/JC_Button
-FiltreTouch touchInputA, touchInputB;
-bool touchA, touchB;
+// FAST LED
 
-//Button touchInputA(0, 100, false, false, true, 30);
-//Button touchInputB(0, 100, false, false, true, 30);
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2811
+#define BRIGHTNESS 64
+
+const uint8_t kMatrixWidth = 16;
+const uint8_t kMatrixHeight = 16;
+
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+
+CRGB leds_plus_safety_pixel[ NUM_LEDS + 1];
+CRGB* const leds( leds_plus_safety_pixel + 1);
+
+// Hardware
+
+FiltreEntradaDigital inputA, inputB;
+
+//bool touchA, touchB;
 
 int puntsExteriors = 0;
 
+// Blynk
+
+#include "blynk.h"
 
 
 #endif
